@@ -1,0 +1,148 @@
+class Producto:
+    def __init__(self, nombre: str, precio: float, cantidad_disponible: int):
+        if precio < 0:
+            raise ValueError("El precio no puede ser negativo")
+        if cantidad_disponible < 0:
+            raise ValueError("La cantidad disponible no puede ser negativa")
+        self.__nombre = nombre
+        self.__precio = float(precio)
+        self.__cantidad_disponible = int(cantidad_disponible)
+
+    def consultar_nombre(self) -> str:
+        return self.__nombre
+
+    def consultar_precio(self) -> float:
+        return self.__precio
+
+    def consultar_cantidad(self) -> int:
+        return self.__cantidad_disponible
+
+    def obtener_informacion(self) -> str:
+        return (f"Nombre: {self.__nombre} | "
+                f"Precio: ${self.__precio:,.0f} | "
+                f"Cantidad disponible: {self.__cantidad_disponible}")
+
+    def actualizar_precio(self, nuevo_precio: float) -> bool:
+        if nuevo_precio >= 0:
+            self.__precio = float(nuevo_precio)
+            return True
+        return False
+
+    def vender_producto(self, cantidad: int) -> bool:
+        if cantidad > 0 and cantidad <= self.__cantidad_disponible:
+            self.__cantidad_disponible -= cantidad
+            return True
+        return False
+
+    def calcular_valor_inventario(self) -> float:
+        return self.__precio * self.__cantidad_disponible
+
+
+
+def solicitar_float(mensaje: str) -> float:
+    while True:
+        try:
+            return float(input(mensaje))
+        except ValueError:
+            print("  → Valor inválido. Ingrese un número.")
+
+
+def solicitar_int(mensaje: str) -> int:
+    while True:
+        try:
+            return int(input(mensaje))
+        except ValueError:
+            print("  → Valor inválido. Ingrese un número entero.")
+
+
+def crear_producto(numero: int) -> Producto:
+    print(f"\nDatos del Producto {numero}")
+    nombre = input("Nombre del producto: ").strip()
+    while not nombre:
+        nombre = input("El nombre no puede estar vacío. Nombre: ").strip()
+
+    while True:
+        precio = solicitar_float("Precio: ")
+        cantidad = solicitar_int("Cantidad disponible: ")
+        try:
+            return Producto(nombre, precio, cantidad)
+        except ValueError as e:
+            print(f"  → Error: {e}. Intente de nuevo.")
+
+
+def seleccionar_producto(productos: list) -> Producto:
+    print("\nProductos disponibles:")
+    for i, p in enumerate(productos, 1):
+        print(f"  {i}. {p.consultar_nombre()}")
+    while True:
+        op = solicitar_int("Seleccione el número del producto: ")
+        if 1 <= op <= len(productos):
+            return productos[op - 1]
+        print("  → Opción fuera de rango.")
+
+
+def mostrar_menu():
+    print("\nMENÚ")
+    print("1. Consultar información de un producto")
+    print("2. Actualizar precio de un producto")
+    print("3. Vender unidades de un producto")
+    print("4. Consultar valor total del inventario")
+    print("5. Salir")
+
+
+def main():
+    print("  GESTIÓN DE PRODUCTOS - TIENDA")
+
+    productos = []
+    productos.append(crear_producto(1))
+    productos.append(crear_producto(2))
+
+    print("\n✓ Productos creados correctamente.")
+
+    while True:
+        mostrar_menu()
+        opcion = solicitar_int("Opción: ")
+
+        if opcion == 1:
+            prod = seleccionar_producto(productos)
+            print("\n" + prod.obtener_informacion())
+
+        elif opcion == 2:
+            prod = seleccionar_producto(productos)
+            nuevo = solicitar_float("Nuevo precio: ")
+            if prod.actualizar_precio(nuevo):
+                print("✓ Precio actualizado correctamente.")
+            else:
+                print("✗ Operación rechazada. El precio no puede ser negativo.")
+                print(f"  Precio actual se mantiene: ${prod.consultar_precio():,.0f}")
+
+        elif opcion == 3:
+            prod = seleccionar_producto(productos)
+            cant = solicitar_int("Cantidad a vender: ")
+            if prod.vender_producto(cant):
+                print("✓ Venta realizada correctamente.")
+                print(f"  Cantidad restante: {prod.consultar_cantidad()}")
+            else:
+                print("✗ Operación rechazada.")
+                print("  (La cantidad debe ser positiva y no superar el inventario)")
+                print(f"  Cantidad disponible se mantiene: {prod.consultar_cantidad()}")
+
+        elif opcion == 4:
+            total = 0.0
+            print("\nValor del inventario por producto")
+            for p in productos:
+                valor = p.calcular_valor_inventario()
+                total += valor
+                print(f"  {p.consultar_nombre()}: ${valor:,.0f}")
+            print(f"\nValor TOTAL del inventario: ${total:,.0f}")
+
+        elif opcion == 5:
+            print("\nPrograma finalizado. ¡Hasta luego!")
+            break
+
+        else:
+            print("  → Opción no válida. Intente de nuevo.")
+
+
+if __name__ == "__main__":
+    main()

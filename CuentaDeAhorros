@@ -1,0 +1,109 @@
+class CuentaAhorros:
+
+
+    def __init__(self, numero: str, titular: str, saldo_inicial: float):
+        self._numero = numero
+        self._titular = titular
+        # Validación en constructor según restricciones
+        if saldo_inicial >= 0:
+            self._saldo = saldo_inicial
+        else:
+            self._saldo = 0.0
+
+    # Métodos Consultores (Getters)
+    def get_numero(self) -> str:
+        return self._numero
+
+    def get_titular(self) -> str:
+        return self._titular
+
+    def get_saldo(self) -> float:
+        return self._saldo
+
+    # Métodos de negocio (Lógica de transacciones)
+    def consignar(self, monto: float) -> bool:
+        """Suma un monto al saldo si es mayor que cero."""
+        if monto > 0:
+            self._saldo += monto
+            return True
+        return False
+
+    def retirar(self, monto: float) -> bool:
+        """Resta un monto al saldo si hay fondos y el valor es válido."""
+        if monto > 0 and monto <= self._saldo:
+            self._saldo -= monto
+            return True
+        return False
+
+
+def solicitar_flotante_positivo(mensaje: str) -> float:
+    """Asegura la captura correcta de valores numéricos no negativos."""
+    while True:
+        try:
+            valor = float(input(mensaje))
+            if valor >= 0:
+                return valor
+            print("Error: El valor no puede ser negativo.")
+        except ValueError:
+            print("Error: Ingrese un dato numérico válido.")
+
+
+def programa_principal():
+    print("=== APERTURA DE CUENTA DE AHORROS ===")
+    num = input("Ingrese el número de la cuenta: ").strip()
+    tit = input("Ingrese el nombre del titular: ").strip()
+    sal_ini = solicitar_flotante_positivo("Ingrese el saldo de apertura inicial ($): ")
+
+    # Instanciación del objeto
+    cuenta = CuentaAhorros(num, tit, sal_ini)
+
+    opcion = -1
+    while opcion != 5:
+        print("\n-------------------------------------------")
+        print("         MENÚ DE GESTIÓN BANCARIA          ")
+        print("-------------------------------------------")
+        print("1. Consultar información de la cuenta")
+        print("2. Realizar una consignación")
+        print("3. Realizar un retiro")
+        print("4. Consultar el saldo")
+        print("5. Finalizar el programa")
+        
+        try:
+            opcion = int(input("Seleccione una opción: "))
+            
+            if opcion == 1:
+                print("\n--- INFORMACIÓN DE LA CUENTA ---")
+                print(f"Número de Cuenta: {cuenta.get_numero()}")
+                print(f"Titular: {cuenta.get_titular()}")
+                print(f"Saldo Disponible: ${cuenta.get_saldo():.2f}")
+                
+            elif opcion == 2:
+                print("\n--- REGISTRO DE CONSIGNACIÓN ---")
+                monto_c = float(input("Ingrese el valor a consignar ($): "))
+                if cuenta.consignar(monto_c):
+                    print(f"¡Operación Realizada! Nuevo saldo: ${cuenta.get_saldo():.2f}")
+                else:
+                    print("Operación Rechazada: El valor de la consignación debe ser mayor que cero.")
+                    
+            elif opcion == 3:
+                print("\n--- REGISTRO DE RETIRO ---")
+                monto_r = float(input("Ingrese el valor a retirar ($): "))
+                if cuenta.retirar(monto_r):
+                    print(f"¡Operación Realizada! Nuevo saldo: ${cuenta.get_saldo():.2f}")
+                else:
+                    print("Operación Rechazada: Fondos insuficientes o monto inválido (debe ser mayor a 0).")
+                    
+            elif opcion == 4:
+                print(f"\nSaldo actual en la cuenta: ${cuenta.get_saldo():.2f}")
+                
+            elif opcion == 5:
+                print("Saliendo de la plataforma financiera... ¡Gracias por usar nuestros servicios!")
+            else:
+                print("Error: Opción inválida. Seleccione un número entre 1 y 5.")
+                
+        except ValueError:
+            print("Error: Debe ingresar un valor numérico válido.")
+
+# Ejecución del programa principal
+if __name__ == "__main__":
+    programa_principal()

@@ -1,0 +1,143 @@
+class PanelSolar:
+    """Clase que representa un panel solar fotovoltaico y calcula su rendimiento."""
+
+    def __init__(self, codigo: str, potencia_nominal: float, eficiencia: float):
+        self._codigo = codigo
+        # Se utilizan los métodos modificadores para inicializar los datos de forma segura
+        self.set_potencia_nominal(potencia_nominal)
+        self.set_eficiencia(eficiencia)
+
+    # Métodos Consultores (Getters)
+    def get_codigo(self) -> str:
+        return self._codigo
+
+    def get_potencia_nominal(self) -> float:
+        return self._potencia_nominal
+
+    def get_eficiencia(self) -> float:
+        return self._eficiencia
+
+    # Métodos Modificadores (Setters) con lógica de validación interna
+    def set_codigo(self, codigo: str):
+        self._codigo = codigo
+
+    def set_potencia_nominal(self, valor: float):
+        if valor > 0:
+            self._potencia_nominal = valor
+        else:
+            self._potencia_nominal = 300.0  # Valor por defecto seguro
+
+    def set_eficiencia(self, valor: float):
+        if 0 < valor <= 100:
+            self._eficiencia = valor
+        else:
+            self._eficiencia = 20.0  # Valor por defecto seguro
+
+    # Métodos de negocio y cálculo
+    def calcular_energia_ideal_wh(self, horas_sol: float) -> float:
+        """Regla: energía ideal (Wh) = potencia nominal (W) × horas de sol (h)"""
+        return self._potencia_nominal * horas_sol
+
+    def calcular_energia_real_wh(self, horas_sol: float) -> float:
+        """Regla: energía real (Wh) = energía ideal × eficiencia / 100"""
+        energia_ideal = self.calcular_energia_ideal_wh(horas_sol)
+        return energia_ideal * (self._eficiencia / 100.0)
+
+    def calcular_energia_real_kwh(self, horas_sol: float) -> float:
+        """Regla: energía real (kWh) = energía real (Wh) / 1000"""
+        return self.calcular_energia_real_wh(horas_sol) / 1000.0
+
+
+def solicitar_flotante_validado(mensaje: str, minimo: float, maximo: float = float('inf')) -> float:
+    """Función auxiliar para asegurar ingresos de datos numéricos correctos y con rangos delimitados."""
+    while True:
+        try:
+            valor = float(input(mensaje))
+            if minimo < valor <= maximo:
+                return valor
+            else:
+                if maximo == float('inf'):
+                    print(f"Error: El valor debe ser mayor que {minimo}.")
+                else:
+                    print(f"Error: El valor debe ser mayor que {minimo} y menor o igual a {maximo}.")
+        except ValueError:
+            print("Error: Ingrese un número válido.")
+
+
+def programa_principal():
+    print("=== REGISTRO INICIAL DEL PANEL SOLAR ===")
+    cod = input("Ingrese el código de identificación del panel: ").strip()
+    
+    # Restricción: Potencia nominal debe ser mayor que cero
+    pot = solicitar_flotante_validado("Ingrese la potencia nominal en vatios (W): ", 0.0)
+    
+    # Restricción: Eficiencia debe ser mayor que cero y no superar el 100%
+    ef = solicitar_flotante_validado("Ingrese la eficiencia del panel (0.1% a 100%): ", 0.0, 100.0)
+
+    # Instanciación de la clase
+    panel = PanelSolar(cod, pot, ef)
+
+    # Variables de control de estado
+    horas_sol_input = 0.0
+    energia_estimada_realizada = False
+    REQUERIMIENTO_LABORATORIO = 1.5  # Constante en kWh
+
+    opcion = -1
+    while opcion != 0:
+        print("\n-------------------------------------------")
+        print("    SISTEMA DE ESTIMACIÓN DE ENERGÍA SOLAR ")
+        print("-------------------------------------------")
+        print("1. Consultar información del panel")
+        print("2. Estimar energía producida")
+        print("3. Verificar si se cubre el requerimiento del laboratorio")
+        print("0. Finalizar el programa")
+        
+        try:
+            opcion = int(input("Seleccione una opción: "))
+            
+            if opcion == 1:
+                print("\n--- INFORMACIÓN DEL PANEL ---")
+                # Llamado explícito a los métodos getters en lugar de las propiedades anteriores
+                print(f"Código ID: {panel.get_codigo()}")
+                print(f"Potencia Nominal: {panel.get_potencia_nominal()} W")
+                print(f"Eficiencia Técnica: {panel.get_eficiencia()} %")
+                
+            elif opcion == 2:
+                print("\n--- ESTIMACIÓN DE ENERGÍA DIARIA ---")
+                # Restricción: Horas de sol deben ser mayores que cero y no superar 24 horas
+                horas_sol_input = solicitar_flotante_validado(
+                    "Ingrese las horas de sol aprovechables para el día: ", 0.0, 24.0
+                )
+                energia_estimada_realizada = True
+                
+                print(f"Energía Ideal Producida: {panel.calcular_energia_ideal_wh(horas_sol_input):.2f} Wh")
+                print(f"Energía Real Estimada: {panel.calcular_energia_real_wh(horas_sol_input):.2f} Wh")
+                print(f"Energía Real Estimada en kWh: {panel.calcular_energia_real_kwh(horas_sol_input):.4f} kWh")
+                
+            elif opcion == 3:
+                print("\n--- VERIFICACIÓN DE REQUERIMIENTO DEL LABORATORIO ---")
+                if not energia_estimada_realizada:
+                    print("Alerta: Primero debe estimar la energía del día (Opción 2) antes de verificar.")
+                else:
+                    kwh_producidos = panel.calcular_energia_real_kwh(horas_sol_input)
+                    print(f"Energía diaria estimada: {kwh_producidos:.4f} kWh")
+                    print(f"Requerimiento mínimo del equipo: {REQUERIMIENTO_LABORATORIO} kWh")
+                    
+                    if kwh_producidos >= REQUERIMIENTO_LABORATORIO:
+                        print("Resultado: ¡Suficiente! El panel CUBRE el requerimiento energético.")
+                    else:
+                        deficit = REQUERIMIENTO_LABORATORIO - kwh_producidos
+                        print("Resultado: ¡Insuficiente! El panel NO alcanza a cubrir el requerimiento.")
+                        print(f"Déficit energético: Faltan {deficit:.4f} kWh para energizar el equipo.")
+                        
+            elif opcion == 0:
+                print("Saliendo del sistema informático... ¡Hasta luego!")
+            else:
+                print("Error: Opción inválida. Elija un número entre 0 y 3.")
+                
+        except ValueError:
+            print("Error: Debe ingresar un número entero válido.")
+
+# Punto de entrada de ejecución del script
+if __name__ == "__main__":
+    programa_principal()
